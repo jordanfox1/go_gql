@@ -17,7 +17,7 @@ const defaultPort = "8080"
 func main() {
 	DB := postgres.NewDB(&pg.Options{
 		User:     "postgres",
-		Password: "postgres",
+		Password: "password",
 		Database: "meetmeup_dev",
 	})
 
@@ -29,7 +29,10 @@ func main() {
 		port = defaultPort
 	}
 
-	config := graph.Config{Resolvers: &graph.Resolver{}}
+	config := graph.Config{Resolvers: &graph.Resolver{
+		MeetupsRepo: postgres.MeetupsRepo{DB: DB},
+		UsersRepo:   postgres.UsersRepo{DB: DB},
+	}}
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
 
