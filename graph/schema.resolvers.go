@@ -10,37 +10,10 @@ import (
 	"go_gql/graph/model"
 )
 
-var meetups = []*model.Meetup{
-	{
-		ID:          "1",
-		Name:        "A meetup",
-		Description: "text",
-		UserID:      "1",
-	},
-	{
-		ID:          "2",
-		Name:        "Another meetup",
-		Description: "text2",
-		UserID:      "2",
-	},
-}
-var users = []model.User{
-	{
-		ID:       "1",
-		Username: "A",
-		Email:    "text@t.com",
-	},
-	{
-		ID:       "2",
-		Username: "A",
-		Email:    "text@t.com",
-	},
-}
-
 // User is the resolver for the user field.
 func (r *meetupResolver) User(ctx context.Context, obj *model.Meetup) (*model.User, error) {
-
-	return r.UsersRepo.GetUserByID(obj.UserID)
+	u, err := GetUserLoader(ctx).Load(obj.UserID)
+	return u[0], err
 }
 
 // CreateMeetup is the resolver for the createMeetup field.
@@ -96,3 +69,36 @@ type meetupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+var meetups = []*model.Meetup{
+	{
+		ID:          "1",
+		Name:        "A meetup",
+		Description: "text",
+		UserID:      "1",
+	},
+	{
+		ID:          "2",
+		Name:        "Another meetup",
+		Description: "text2",
+		UserID:      "2",
+	},
+}
+var users = []model.User{
+	{
+		ID:       "1",
+		Username: "A",
+		Email:    "text@t.com",
+	},
+	{
+		ID:       "2",
+		Username: "A",
+		Email:    "text@t.com",
+	},
+}
