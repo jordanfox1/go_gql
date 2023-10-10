@@ -15,17 +15,24 @@ func DataloaderMiddleware(db *pg.DB, next http.Handler) http.HandlerFunc {
 		userloader := UserLoader{
 			maxBatch: 100,
 			wait:     1 * time.Millisecond,
-			fetch: func(keys []string) ([][]*model.User, []error) {
+			fetch: func(ids []string) ([][]*model.User, []error) {
 				var users []*model.User
-				err := db.Model(&users).Where("id in (?)", pg.In(keys)).Select()
+
+				err := db.Model(&users).Where("id in (?)", pg.In(ids)).Select()
+
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				// Create a slice of slices containing a single user for each key.
-				result := make([][]*model.User, len(keys))
-				for i := range keys {
-					result[i] = []*model.User{users[i]}
+				result := make([][]*model.User, len(ids))
+				for i, id := range ids {
+					for _, user := range users {
+						if user.ID == id {
+							result[i] = []*model.User{user}
+							break
+						}
+					}
 				}
 
 				return result, nil

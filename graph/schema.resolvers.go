@@ -14,6 +14,7 @@ import (
 func (r *meetupResolver) User(ctx context.Context, obj *model.Meetup) (*model.User, error) {
 	u, err := GetUserLoader(ctx).Load(obj.UserID)
 	return u[0], err
+	//return r.UsersRepo.GetUserByID(obj.UserID)
 }
 
 // CreateMeetup is the resolver for the createMeetup field.
