@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go_gql/graph/model"
 )
 
@@ -33,6 +34,42 @@ func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeet
 		UserID:      "1",
 	}
 	return r.MeetupsRepo.CreateMeetup(meetup)
+}
+
+// UpdateMeetup is the resolver for the updateMeetup field.
+func (r *mutationResolver) UpdateMeetup(ctx context.Context, id string, input model.UpdateMeetup) (*model.Meetup, error) {
+	meetup, err := r.MeetupsRepo.GetByID(id)
+	if err != nil || meetup == nil {
+		return nil, errors.New("meetup does not exist")
+	}
+
+	didUpdate := false
+
+	if input.Name != nil {
+		if len(*input.Name) < 3 {
+			return nil, errors.New("name is not long enough")
+		}
+		meetup.Name = *input.Name
+		didUpdate = true
+	}
+
+	if input.Description != nil {
+		if len(*input.Name) < 3 {
+			return nil, errors.New("description is not long enough")
+		}
+		meetup.Name = *input.Description
+		didUpdate = true
+	}
+
+	if !didUpdate {
+		return nil, errors.New("no update done")
+	}
+
+	meetup, err = r.MeetupsRepo.Update(meetup)
+	if err != nil {
+		return nil, fmt.Errorf("error updating meetup: %v", err)
+	}
+	return meetup, nil
 }
 
 // Meetups is the resolver for the meetups field.

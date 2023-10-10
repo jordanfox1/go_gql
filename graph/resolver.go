@@ -1,6 +1,8 @@
 package graph
 
-import "go_gql/postgres"
+import (
+	"go_gql/postgres"
+)
 
 // This file will not be regenerated automatically.
 //

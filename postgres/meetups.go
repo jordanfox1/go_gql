@@ -25,3 +25,14 @@ func (m *MeetupsRepo) CreateMeetup(meetup *model.Meetup) (*model.Meetup, error) 
 	_, err := m.DB.Model(meetup).Returning("*").Insert()
 	return meetup, err
 }
+
+func (m *MeetupsRepo) GetByID(id string) (*model.Meetup, error) {
+	var meetup model.Meetup
+	err := m.DB.Model(&meetup).Where("id = ?", id).First()
+	return &meetup, err
+}
+
+func (m *MeetupsRepo) Update(meetup *model.Meetup) (*model.Meetup, error) {
+	_, err := m.DB.Model(meetup).Where("id = ?", meetup.ID).Update()
+	return meetup, err
+}
