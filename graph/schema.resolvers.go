@@ -88,9 +88,9 @@ func (r *mutationResolver) DeleteMeetup(ctx context.Context, id string) (bool, e
 }
 
 // Meetups is the resolver for the meetups field.
-func (r *queryResolver) Meetups(ctx context.Context) ([]*model.Meetup, error) {
+func (r *queryResolver) Meetups(ctx context.Context, filter *model.MeetupFilter, limit *int, offset *int) ([]*model.Meetup, error) {
 	// panic(fmt.Errorf("not implemented: Meetups - meetups"))
-	return r.MeetupsRepo.GetMeetups()
+	return r.MeetupsRepo.GetMeetups(filter, limit, offset)
 }
 
 // User is the resolver for the user field.
@@ -111,7 +111,10 @@ func (r *Resolver) Meetup() MeetupResolver { return &meetupResolver{r} }
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+func (r *Resolver) Query() QueryResolver {
+	return &queryResolver{r}
+	//return r.MeetupsRepo.GetMeetups()
+}
 
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
