@@ -25,9 +25,11 @@ input UpdateMeetup {
 
 type Query {
   meetups: [Meetup!]!
+  user(id: ID!): User!
 }
 
 type Mutation {
   createMeetup(input: NewMeetup!): Meetup!
   updateMeetup(id: ID!, input: UpdateMeetup!): Meetup!
+  deleteMeetup(id: ID!): Boolean!
 }

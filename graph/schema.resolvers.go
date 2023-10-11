@@ -72,23 +72,36 @@ func (r *mutationResolver) UpdateMeetup(ctx context.Context, id string, input mo
 	return meetup, nil
 }
 
+// DeleteMeetup is the resolver for the deleteMeetup field.
+func (r *mutationResolver) DeleteMeetup(ctx context.Context, id string) (bool, error) {
+	meetup, err := r.MeetupsRepo.GetByID(id)
+	if err != nil || meetup == nil {
+		return false, errors.New("meetup does not exist")
+	}
+
+	err = r.MeetupsRepo.Delete(meetup)
+	if err != nil {
+		return false, fmt.Errorf("error deleting meetup with id %v", id)
+	}
+
+	return true, nil
+}
+
 // Meetups is the resolver for the meetups field.
 func (r *queryResolver) Meetups(ctx context.Context) ([]*model.Meetup, error) {
 	// panic(fmt.Errorf("not implemented: Meetups - meetups"))
 	return r.MeetupsRepo.GetMeetups()
 }
 
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+	//panic(fmt.Errorf("not implemented: User - user"))
+	return r.UsersRepo.GetUserByID(id)
+}
+
 // Meetups is the resolver for the meetups field.
 func (r *userResolver) Meetups(ctx context.Context, obj *model.User) ([]*model.Meetup, error) {
-	var m []*model.Meetup
-
-	for _, meetup := range meetups {
-		if meetup.UserID == obj.ID {
-			m = append(m, meetup)
-		}
-	}
-
-	return m, nil
+	return r.MeetupsRepo.GetMeetupsForUser(obj)
 }
 
 // Meetup returns MeetupResolver implementation.
@@ -107,36 +120,3 @@ type meetupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-var meetups = []*model.Meetup{
-	{
-		ID:          "1",
-		Name:        "A meetup",
-		Description: "text",
-		UserID:      "1",
-	},
-	{
-		ID:          "2",
-		Name:        "Another meetup",
-		Description: "text2",
-		UserID:      "2",
-	},
-}
-var users = []model.User{
-	{
-		ID:       "1",
-		Username: "A",
-		Email:    "text@t.com",
-	},
-	{
-		ID:       "2",
-		Username: "A",
-		Email:    "text@t.com",
-	},
-}
