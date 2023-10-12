@@ -17,6 +17,7 @@ import (
 var (
 	ErrUnauthenticated = "user is not authenticated"
 	ErrBadCredentials  = "user with given email/password was not found"
+	ErrInput           = errors.New("input error")
 )
 
 // User is the resolver for the user field.
@@ -28,6 +29,11 @@ func (r *meetupResolver) User(ctx context.Context, obj *model.Meetup) (*model.Us
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, input *model.RegisterInput) (*model.AuthResponse, error) {
+	isValid := validation(ctx, input)
+	if !isValid {
+		return nil, ErrInput
+	}
+
 	_, err := r.UsersRepo.GetUserByEmail(input.Email)
 	if err == nil {
 		return nil, errors.New(fmt.Sprintf("email already in use. error: %v", err))
@@ -82,7 +88,13 @@ func (r *mutationResolver) Register(ctx context.Context, input *model.RegisterIn
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input *model.LoginInput) (*model.AuthResponse, error) {
+	isValid := validation(ctx, input)
+	if !isValid {
+		return nil, ErrInput
+	}
+
 	user, err := r.UsersRepo.GetUserByEmail(input.Email)
+
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("%v: %v", ErrBadCredentials, err))
 	}
