@@ -1,7 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/rs/cors"
 	"go_gql/graph"
+	custom_middleware "go_gql/middleware"
 	"go_gql/postgres"
 	"log"
 	"net/http"
@@ -11,8 +16,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-pg/pg/v10"
 )
-
-const defaultPort = "8080"
 
 func main() {
 	DB := postgres.NewDB(&pg.Options{
@@ -26,12 +29,26 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = defaultPort
+		port = "8080"
 	}
+
+	// We only want ONE instance of this
+	userRepo := postgres.UsersRepo{DB: DB}
+
+	router := chi.NewRouter()
+
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{fmt.Sprintf("http://localhost:%s", port)},
+		AllowCredentials: true,
+		Debug:            true,
+	}).Handler)
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(custom_middleware.AuthMiddleware(userRepo))
 
 	config := graph.Config{Resolvers: &graph.Resolver{
 		MeetupsRepo: postgres.MeetupsRepo{DB: DB},
-		UsersRepo:   postgres.UsersRepo{DB: DB},
+		UsersRepo:   userRepo,
 	}}
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))

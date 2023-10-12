@@ -4,14 +4,17 @@ go 1.21.1
 
 require (
 	github.com/99designs/gqlgen v0.17.39
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/go-chi/chi v1.5.5
 	github.com/go-pg/pg/v10 v10.11.1
+	github.com/pkg/errors v0.9.1
+	github.com/rs/cors v1.10.1
 	github.com/vektah/gqlparser/v2 v2.5.10
 )
 
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/go-chi/chi v1.5.5 // indirect
 	github.com/go-pg/zerochecker v0.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
