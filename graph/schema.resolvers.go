@@ -9,8 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"go_gql/graph/model"
+	"go_gql/middleware"
 	"log"
 	"time"
+)
+
+var (
+	ErrUnauthenticated = "user is not authenticated"
+	ErrBadCredentials  = "user with given email/password was not found"
 )
 
 // User is the resolver for the user field.
@@ -74,8 +80,36 @@ func (r *mutationResolver) Register(ctx context.Context, input *model.RegisterIn
 	}, nil
 }
 
+// Login is the resolver for the login field.
+func (r *mutationResolver) Login(ctx context.Context, input *model.LoginInput) (*model.AuthResponse, error) {
+	user, err := r.UsersRepo.GetUserByEmail(input.Email)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("%v: %v", ErrBadCredentials, err))
+	}
+
+	err = user.ComparePassword(input.Password)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("%v: %v", ErrBadCredentials, err))
+	}
+
+	token, err := user.GenToken()
+	if err != nil {
+		return nil, errors.New("something went wrong")
+	}
+
+	return &model.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
+}
+
 // CreateMeetup is the resolver for the createMeetup field.
 func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeetup) (*model.Meetup, error) {
+	currentUser, err := middleware.GetCurrentUserFromCTX(ctx)
+	if err != nil {
+		return nil, errors.New(ErrUnauthenticated)
+	}
+
 	if len(input.Name) < 3 {
 		return nil, errors.New("name not long enough")
 	}
@@ -87,7 +121,7 @@ func (r *mutationResolver) CreateMeetup(ctx context.Context, input model.NewMeet
 	meetup := &model.Meetup{
 		Name:        input.Name,
 		Description: input.Description,
-		UserID:      "1",
+		UserID:      currentUser.ID,
 	}
 	return r.MeetupsRepo.CreateMeetup(meetup)
 }
