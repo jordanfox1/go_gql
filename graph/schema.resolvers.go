@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"go_gql/graph/model"
+	"log"
+	"time"
 )
 
 // User is the resolver for the user field.
@@ -16,6 +18,60 @@ func (r *meetupResolver) User(ctx context.Context, obj *model.Meetup) (*model.Us
 	u, err := GetUserLoader(ctx).Load(obj.UserID)
 	return u[0], err
 	//return r.UsersRepo.GetUserByID(obj.UserID)
+}
+
+// Register is the resolver for the register field.
+func (r *mutationResolver) Register(ctx context.Context, input *model.RegisterInput) (*model.AuthResponse, error) {
+	_, err := r.UsersRepo.GetUserByEmail(input.Email)
+	if err == nil {
+		return nil, errors.New(fmt.Sprintf("email already in use. error: %v", err))
+	}
+	_, err = r.UsersRepo.GetUserByUsername(input.Username)
+	if err == nil {
+		return nil, errors.New(fmt.Sprintf("Username already in use. error: %v", err))
+	}
+
+	user := &model.User{
+		Username:  input.Username,
+		Email:     input.Email,
+		FirstName: input.Firstname,
+		LastName:  input.Lastname,
+	}
+
+	err = user.HashPassword(input.Password)
+	if err != nil {
+		log.Printf("error creating password hash: %v", err)
+		return nil, errors.New("error creating password hash")
+	}
+
+	//	 TODO: create verification code
+	tx, err := r.UsersRepo.DB.Begin()
+	if err != nil {
+		log.Printf("error creating transaction")
+		return nil, errors.New("something went wrong")
+	}
+	defer tx.Rollback()
+
+	if _, err := r.UsersRepo.CreateUser(tx, user); err != nil {
+		log.Printf("error creating a user: %v", err)
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("error commiting transaction: %v", err)
+		return nil, err
+	}
+
+	token, err := user.GenToken()
+	if err != nil {
+		log.Printf("error generating jwt token: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+
+	return &model.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
 }
 
 // CreateMeetup is the resolver for the createMeetup field.
@@ -111,10 +167,7 @@ func (r *Resolver) Meetup() MeetupResolver { return &meetupResolver{r} }
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver {
-	return &queryResolver{r}
-	//return r.MeetupsRepo.GetMeetups()
-}
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
@@ -123,3 +176,22 @@ type meetupResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *userResolver) Firstname(ctx context.Context, obj *model.User) (string, error) {
+	panic(fmt.Errorf("not implemented: Firstname - firstname"))
+}
+func (r *userResolver) Lastname(ctx context.Context, obj *model.User) (string, error) {
+	panic(fmt.Errorf("not implemented: Lastname - lastname"))
+}
+func (r *userResolver) CreatedAt(ctx context.Context, obj *model.User) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
+}
+func (r *userResolver) UpdatedAt(ctx context.Context, obj *model.User) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
+}

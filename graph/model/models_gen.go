@@ -2,6 +2,20 @@
 
 package model
 
+import (
+	"time"
+)
+
+type AuthResponse struct {
+	AuthToken *AuthToken `json:"authToken"`
+	User      *User      `json:"user"`
+}
+
+type AuthToken struct {
+	AccessToken string    `json:"accessToken"`
+	ExpiredAt   time.Time `json:"expiredAt"`
+}
+
 type MeetupFilter struct {
 	Name *string `json:"name,omitempty"`
 }
@@ -9,6 +23,14 @@ type MeetupFilter struct {
 type NewMeetup struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type RegisterInput struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
 }
 
 type UpdateMeetup struct {
